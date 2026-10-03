@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Spotify Finances Native</title>
+  <title>Spotify Finances Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -15,78 +15,153 @@
     .bg-spotify-green:hover { background-color: #1ed760; }
   </style>
 </head>
-<body class="pb-24">
+<body class="pb-28">
 
-  <!-- Header con estado de actualización -->
-  <header class="bg-black border-b border-white/10 p-4 sticky top-0 z-40">
+  <!-- Header -->
+  <header class="bg-black border-b border-white/10 p-4 sticky top-0 z-30">
     <div class="max-w-md mx-auto flex justify-between items-center">
       <div class="flex items-center gap-2">
         <i class="fa-brands fa-spotify text-spotify-green text-2xl"></i>
         <div>
-          <h1 class="text-base font-bold text-white leading-tight">Finanzas Pro</h1>
-          <p id="app-version" class="text-[10px] text-zinc-400">v1.0.0 • Local Native</p>
+          <h1 class="text-base font-bold text-white leading-tight">Control Financiero</h1>
+          <p class="text-[10px] text-zinc-400">100% Personalizable • Datos Locales Privados</p>
         </div>
       </div>
       <button onclick="checkGitHubUpdate(true)" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5">
-        <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Buscar Update
+        <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Update
       </button>
     </div>
   </header>
 
-  <!-- Banner de Nueva Versión Disponible en GitHub -->
+  <!-- Banner de Actualización GitHub -->
   <div id="update-banner" class="hidden max-w-md mx-auto m-4 p-3 bg-spotify-green text-black rounded-xl font-semibold flex justify-between items-center text-xs shadow-lg">
-    <span>🚀 ¡Nueva versión disponible en GitHub!</span>
+    <span>🚀 ¡Nueva versión disponible!</span>
     <a id="update-link" href="#" target="_blank" class="bg-black text-white px-3 py-1 rounded-full text-[11px] font-bold">Descargar APK</a>
   </div>
 
   <main class="max-w-md mx-auto p-4 space-y-6">
+
     <!-- Hero Resumen -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-emerald-900/40 to-spotify-card p-6 border border-white/10">
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-emerald-900/40 to-spotify-card p-6 border border-white/10 shadow-2xl">
       <span class="text-xs font-bold text-zinc-400 tracking-wider uppercase">Deuda Total Acumulada</span>
       <div id="deuda-total" class="text-3xl font-black text-white my-1 font-mono">$0.00 MXN</div>
       <div class="flex justify-between items-center text-xs text-zinc-400 pt-3 border-t border-white/10">
-        <span>Abonos Extras del Día:</span>
+        <span>Abonos / Pagos Extras del Día:</span>
         <span id="abonos-dia" class="font-bold text-spotify-green">$0.00 MXN</span>
       </div>
     </div>
 
-    <!-- Filtros Píldora -->
-    <div class="flex gap-2 text-xs font-semibold overflow-x-auto pb-1">
-      <button onclick="filtrar('TODOS')" id="f-TODOS" class="px-4 py-1.5 rounded-full bg-white text-black font-bold">Todos</button>
-      <button onclick="filtrar('DEUDA')" id="f-DEUDA" class="px-4 py-1.5 rounded-full bg-zinc-800 text-zinc-300">Deudas</button>
-      <button onclick="filtrar('PAGO_EXTRA')" id="f-PAGO_EXTRA" class="px-4 py-1.5 rounded-full bg-zinc-800 text-zinc-300">Abonos Diarios</button>
+    <!-- Barra de Acciones y Filtros -->
+    <div class="space-y-3">
+      <div class="flex justify-between items-center">
+        <!-- Filtros Píldora -->
+        <div class="flex gap-2 text-xs font-semibold overflow-x-auto pb-1">
+          <button onclick="filtrar('TODOS')" id="f-TODOS" class="px-4 py-1.5 rounded-full bg-white text-black font-bold">Todos</button>
+          <button onclick="filtrar('DEUDA')" id="f-DEUDA" class="px-4 py-1.5 rounded-full bg-zinc-800 text-zinc-300">Deudas</button>
+          <button onclick="filtrar('PAGO_EXTRA')" id="f-PAGO_EXTRA" class="px-4 py-1.5 rounded-full bg-zinc-800 text-zinc-300">Abonos</button>
+        </div>
+
+        <button onclick="abrirModalCrear()" class="text-xs bg-spotify-green hover:bg-emerald-400 text-black font-extrabold px-3.5 py-1.5 rounded-full flex items-center gap-1 shadow-lg shrink-0">
+          <i class="fa-solid fa-plus text-[10px]"></i> Nueva Cuenta
+        </button>
+      </div>
     </div>
 
-    <!-- Lista -->
-    <div id="lista-cuentas" class="space-y-3"></div>
+    <!-- Contenedor Dinámico -->
+    <div id="lista-cuentas" class="space-y-3">
+      <!-- Muestra el estado vacío si no hay cuentas -->
+    </div>
+
   </main>
 
-  <script>
-    // CONFIGURACIÓN DE TU REPOSITORIO DE GITHUB
-    const GITHUB_CONFIG = {
-      user: "TU_USUARIO_GITHUB", // <-- Cambia esto por tu usuario de GitHub
-      repo: "mi-control-deudas", // <-- Cambia esto por el nombre de tu repositorio
-      versionActual: "1.0.0"
-    };
+  <!-- MODAL: Crear / Editar Cuenta -->
+  <div id="modal-cuenta" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+    <div class="bg-spotify-card border border-white/10 rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-white/10 pb-3">
+        <h3 id="modal-cuenta-titulo" class="text-lg font-bold text-white">Nueva Cuenta</h3>
+        <button onclick="cerrarModalCuenta()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
 
-    const DATOS_INICIALES = [
-      { id: 'stori', nombre: 'STORI', tipo: 'DEUDA', monto: 3710.29, subitems: [] },
-      { id: 'c_and_a', nombre: 'C&A', tipo: 'DEUDA', monto: 3715.86, subitems: [{ concepto: 'Compra 1', monto: 424.84 }, { concepto: 'Compra 2', monto: 3291.02 }] },
-      { id: 'nu', nombre: 'NU', tipo: 'PAGO_EXTRA', monto: 0.00, subitems: [] },
-      { id: 'klar', nombre: 'KLAR', tipo: 'PAGO_EXTRA', monto: 0.00, subitems: [] }
-    ];
+      <form id="form-cuenta" onsubmit="guardarNuevaCuenta(event)" class="space-y-4">
+        <input type="hidden" id="input-cuenta-id">
+
+        <div>
+          <label class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Nombre de la Cuenta / Tarjeta</label>
+          <input type="text" id="input-nombre" required placeholder="Ej: BBVA, Stori, Nu, Liverpool" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-white text-sm mt-1 focus:outline-none focus:border-spotify-green">
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Tipo de Registro</label>
+          <select id="input-tipo" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-white text-sm mt-1 focus:outline-none focus:border-spotify-green">
+            <option value="DEUDA">Deuda / Saldo Pendiente</option>
+            <option value="PAGO_EXTRA">Abono Diario / Tarjeta Extra</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Monto o Saldo Inicial ($ MXN)</label>
+          <input type="number" id="input-monto" step="0.01" required placeholder="0.00" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-white text-base font-mono font-bold mt-1 focus:outline-none focus:border-spotify-green">
+        </div>
+
+        <!-- Sub-items dinámicos -->
+        <div class="border-t border-white/10 pt-3">
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Desglose de Compras (Opcional)</label>
+            <button type="button" onclick="agregarInputSubitem()" class="text-[11px] text-spotify-green font-bold">+ Agregar Sub-item</button>
+          </div>
+          <div id="subitems-container" class="space-y-2">
+            <!-- Inputs dinámicos -->
+          </div>
+        </div>
+
+        <div class="pt-2 flex gap-3">
+          <button type="button" onclick="cerrarModalCuenta()" class="flex-1 bg-zinc-800 text-zinc-300 py-3 rounded-full text-xs font-bold">Cancelar</button>
+          <button type="submit" class="flex-1 bg-spotify-green text-black py-3 rounded-full text-xs font-extrabold">Guardar Cuenta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Ajuste Rápido de Saldo -->
+  <div id="modal-ajuste" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-spotify-card border border-white/10 rounded-2xl p-5 w-full max-w-xs space-y-4">
+      <h3 id="modal-ajuste-titulo" class="text-base font-bold text-white">Ajustar Saldo</h3>
+      <div>
+        <label class="text-xs text-zinc-400">Cantidad a modificar ($)</label>
+        <input type="number" id="input-monto-ajuste" step="0.01" placeholder="0.00" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-white text-lg font-mono font-bold mt-1 focus:outline-none focus:border-spotify-green">
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="ejecutarAjuste('AUMENTO')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1">
+          <i class="fa-solid fa-plus"></i> Aumentar
+        </button>
+        <button onclick="ejecutarAjuste('DISMINUCION')" class="bg-spotify-green hover:bg-emerald-400 text-black font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1">
+          <i class="fa-solid fa-minus"></i> Disminuir
+        </button>
+      </div>
+      <button onclick="cerrarModalAjuste()" class="w-full text-center text-xs text-zinc-400 pt-1">Cancelar</button>
+    </div>
+  </div>
+
+  <script>
+    const GITHUB_CONFIG = {
+      user: "TU_USUARIO_GITHUB", // Cambia esto por tu usuario de GitHub
+      repo: "mi-control-deudas",  // Nombre de tu repositorio
+      versionActual: "1.0.2"
+    };
 
     let cuentas = [];
     let filtroActual = 'TODOS';
+    let cuentaAjusteId = null;
 
-    function cargar() {
-      const saved = localStorage.getItem('spotify_finances_data');
-      cuentas = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DATOS_INICIALES));
+    function cargarCuentas() {
+      const guardado = localStorage.getItem('spotify_finances_data');
+      // Inicia completamente VACÍO [] si no hay nada guardado
+      cuentas = guardado ? JSON.parse(guardado) : [];
       render();
       checkGitHubUpdate(false);
     }
 
-    function guardar() {
+    function guardarCuentas() {
       localStorage.setItem('spotify_finances_data', JSON.stringify(cuentas));
       render();
     }
@@ -94,57 +169,177 @@
     function render() {
       const contenedor = document.getElementById('lista-cuentas');
       contenedor.innerHTML = '';
-      let totalDeuda = 0, totalExtras = 0;
+
+      let totalDeuda = 0;
+      let totalExtras = 0;
 
       cuentas.forEach(c => {
         if (c.tipo === 'DEUDA') totalDeuda += c.monto;
         else totalExtras += c.monto;
-
-        if (filtroActual === 'TODOS' || filtroActual === c.tipo) {
-          contenedor.appendChild(crearCard(c));
-        }
       });
 
-      document.getElementById('deuda-total').innerText = `$${totalDeuda.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-      document.getElementById('abonos-dia').innerText = `$${totalExtras.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+      document.getElementById('deuda-total').innerText = `$${totalDeuda.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+      document.getElementById('abonos-dia').innerText = `$${totalExtras.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+
+      const cuentasFiltradas = cuentas.filter(c => filtroActual === 'TODOS' || c.tipo === filtroActual);
+
+      // ESTADO VACÍO (Cosas limpias para un usuario nuevo)
+      if (cuentasFiltradas.length === 0) {
+        contenedor.innerHTML = `
+          <div class="text-center py-12 px-4 bg-spotify-card border border-white/5 rounded-2xl space-y-3">
+            <div class="w-12 h-12 bg-zinc-800 text-spotify-green rounded-full flex items-center justify-center mx-auto text-xl">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+            <h3 class="font-bold text-white text-sm">Sin datos registrados</h3>
+            <p class="text-xs text-zinc-400 max-w-xs mx-auto">
+              Esta aplicación está limpia. Agrega tus cuentas o tarjetas de crédito con el botón inferior.
+            </p>
+            <button onclick="abrirModalCrear()" class="text-xs bg-spotify-green text-black font-extrabold px-4 py-2 rounded-full inline-flex items-center gap-1.5 mt-2 shadow-lg">
+              <i class="fa-solid fa-plus"></i> Agregar Mi Primera Cuenta
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      cuentasFiltradas.forEach(c => {
+        contenedor.appendChild(crearCardCuenta(c));
+      });
     }
 
-    function crearCard(c) {
+    function crearCardCuenta(c) {
       const card = document.createElement('div');
-      card.className = 'bg-spotify-card border border-white/5 rounded-2xl p-4 space-y-3';
+      card.className = 'bg-spotify-card border border-white/5 rounded-2xl p-4 space-y-3 relative group';
       const esExtra = c.tipo === 'PAGO_EXTRA';
 
       let subitemsHTML = '';
       if (c.subitems && c.subitems.length > 0) {
-        subitemsHTML = `<div class="bg-black/40 rounded-xl p-2.5 space-y-1 text-xs text-zinc-400">` +
-          c.subitems.map(s => `<div class="flex justify-between"><span>• ${s.concepto}</span><span class="font-mono">$${s.monto.toFixed(2)}</span></div>`).join('') +
+        subitemsHTML = `<div class="bg-black/40 rounded-xl p-2.5 space-y-1 text-xs text-zinc-400 my-2">` +
+          c.subitems.map(s => `<div class="flex justify-between"><span>• ${s.concepto}</span><span class="font-mono text-zinc-200">$${parseFloat(s.monto).toFixed(2)}</span></div>`).join('') +
           `</div>`;
       }
 
       card.innerHTML = `
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-start">
           <div>
-            <h3 class="font-bold text-white">${c.nombre}</h3>
-            <span class="text-[11px] ${esExtra ? 'text-spotify-green' : 'text-rose-400'} font-medium">${esExtra ? 'Abono Acumulado' : 'Saldo Deudor'}</span>
+            <h3 class="font-bold text-white text-base">${c.nombre}</h3>
+            <span class="text-[11px] ${esExtra ? 'text-spotify-green' : 'text-rose-400'} font-semibold">
+              ${esExtra ? 'Abono Acumulado' : 'Saldo Deudor'}
+            </span>
           </div>
-          <div class="text-right">
-            <div class="text-lg font-black font-mono ${esExtra ? 'text-spotify-green' : 'text-white'}">$${c.monto.toFixed(2)}</div>
+          <div class="flex items-center gap-2">
+            <div class="text-right">
+              <div class="text-lg font-black font-mono ${esExtra ? 'text-spotify-green' : 'text-white'}">$${c.monto.toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
+            </div>
+            <button onclick="eliminarCuenta('${c.id}')" class="text-zinc-500 hover:text-rose-400 p-1 ml-1 text-xs" title="Eliminar">
+              <i class="fa-solid fa-trash"></i>
+            </button>
           </div>
         </div>
+
         ${subitemsHTML}
+
         <div class="flex gap-2 pt-1">
-          <button onclick="modificarSaldo('${c.id}', -100)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2 rounded-full text-xs font-bold">- $100</button>
-          <button onclick="modificarSaldo('${c.id}', 100)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2 rounded-full text-xs font-bold">+ $100</button>
+          <button onclick="abrirModalAjuste('${c.id}')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2 rounded-full text-xs font-bold flex items-center justify-center gap-1">
+            <i class="fa-solid fa-pen-to-square"></i> Ajustar Saldo
+          </button>
         </div>
       `;
       return card;
     }
 
-    function modificarSaldo(id, delta) {
+    function abrirModalCrear() {
+      document.getElementById('form-cuenta').reset();
+      document.getElementById('input-cuenta-id').value = '';
+      document.getElementById('subitems-container').innerHTML = '';
+      document.getElementById('modal-cuenta-titulo').innerText = 'Nueva Cuenta';
+      document.getElementById('modal-cuenta').classList.remove('hidden');
+    }
+
+    function cerrarModalCuenta() {
+      document.getElementById('modal-cuenta').classList.add('hidden');
+    }
+
+    function agregarInputSubitem(concepto = '', monto = '') {
+      const container = document.getElementById('subitems-container');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2 items-center';
+      div.innerHTML = `
+        <input type="text" placeholder="Concepto (ej. Compra 1)" value="${concepto}" class="sub-concepto flex-1 bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white">
+        <input type="number" step="0.01" placeholder="Monto" value="${monto}" class="sub-monto w-24 bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white font-mono">
+        <button type="button" onclick="this.parentElement.remove()" class="text-zinc-500 hover:text-rose-400 text-xs px-1"><i class="fa-solid fa-xmark"></i></button>
+      `;
+      container.appendChild(div);
+    }
+
+    function guardarNuevaCuenta(e) {
+      e.preventDefault();
+      const nombre = document.getElementById('input-nombre').value.trim();
+      const tipo = document.getElementById('input-tipo').value;
+      const montoBase = parseFloat(document.getElementById('input-monto').value) || 0;
+
+      const subConceptos = document.querySelectorAll('.sub-concepto');
+      const subMontos = document.querySelectorAll('.sub-monto');
+      const subitems = [];
+      let sumaSubitems = 0;
+
+      subConceptos.forEach((input, index) => {
+        const valConcepto = input.value.trim();
+        const valMonto = parseFloat(subMontos[index].value) || 0;
+        if (valConcepto && valMonto > 0) {
+          subitems.push({ concepto: valConcepto, monto: valMonto });
+          sumaSubitems += valMonto;
+        }
+      });
+
+      const montoFinal = subitems.length > 0 && montoBase === 0 ? sumaSubitems : montoBase;
+
+      const nuevaCuenta = {
+        id: 'cuenta_' + Date.now(),
+        nombre,
+        tipo,
+        monto: montoFinal,
+        subitems
+      };
+
+      cuentas.push(nuevaCuenta);
+      guardarCuentas();
+      cerrarModalCuenta();
+    }
+
+    function eliminarCuenta(id) {
+      if (confirm('¿Seguro que deseas eliminar esta cuenta?')) {
+        cuentas = cuentas.filter(c => c.id !== id);
+        guardarCuentas();
+      }
+    }
+
+    function abrirModalAjuste(id) {
+      cuentaAjusteId = id;
       const c = cuentas.find(x => x.id === id);
+      document.getElementById('modal-ajuste-titulo').innerText = `Ajustar: ${c.nombre}`;
+      document.getElementById('input-monto-ajuste').value = '';
+      document.getElementById('modal-ajuste').classList.remove('hidden');
+    }
+
+    function cerrarModalAjuste() {
+      document.getElementById('modal-ajuste').classList.add('hidden');
+      cuentaAjusteId = null;
+    }
+
+    function ejecutarAjuste(accion) {
+      const cantidad = parseFloat(document.getElementById('input-monto-ajuste').value);
+      if (isNaN(cantidad) || cantidad <= 0) {
+        alert('Ingresa una cantidad válida.');
+        return;
+      }
+
+      const c = cuentas.find(x => x.id === cuentaAjusteId);
       if (c) {
-        c.monto = Math.max(0, c.monto + delta);
-        guardar();
+        if (accion === 'AUMENTO') c.monto += cantidad;
+        else if (accion === 'DISMINUCION') c.monto = Math.max(0, c.monto - cantidad);
+        guardarCuentas();
+        cerrarModalAjuste();
       }
     }
 
@@ -158,7 +353,6 @@
       render();
     }
 
-    // Detector de Actualizaciones desde GitHub Releases
     async function checkGitHubUpdate(alertaManual) {
       if (GITHUB_CONFIG.user === "TU_USUARIO_GITHUB") return;
       try {
@@ -170,18 +364,16 @@
         if (latestTag !== GITHUB_CONFIG.versionActual) {
           document.getElementById('update-banner').classList.remove('hidden');
           const apkAsset = data.assets.find(a => a.name.endsWith('.apk'));
-          if (apkAsset) {
-            document.getElementById('update-link').href = apkAsset.browser_download_url;
-          }
+          if (apkAsset) document.getElementById('update-link').href = apkAsset.browser_download_url;
         } else if (alertaManual) {
-          alert('¡Tu aplicación ya está en la última versión!');
+          alert('¡Tu aplicación está actualizada!');
         }
       } catch (e) {
-        if (alertaManual) alert('No se pudo verificar la actualización. Revisa la configuración de tu repositorio.');
+        if (alertaManual) alert('Error consultando GitHub Releases.');
       }
     }
 
-    window.onload = cargar;
+    window.onload = cargarCuentas;
   </script>
 </body>
 </html>
