@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Spotify Finances Native</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #121212; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; touch-action: manipulation; }
+    .bg-spotify-card { background-color: #181818; }
+    .bg-spotify-card-hover:hover { background-color: #282828; }
+    .text-spotify-green { color: #1DB954; }
+    .bg-spotify-green { background-color: #1DB954; }
+    .bg-spotify-green:hover { background-color: #1ed760; }
+  </style>
+</head>
+<body class="pb-24">
+
+  <!-- Header con estado de actualización -->
+  <header class="bg-black border-b border-white/10 p-4 sticky top-0 z-40">
+    <div class="max-w-md mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <i class="fa-brands fa-spotify text-spotify-green text-2xl"></i>
+        <div>
+          <h1 class="text-base font-bold text-white leading-tight">Finanzas Pro</h1>
+          <p id="app-version" class="text-[10px] text-zinc-400">v1.0.0 • Local Native</p>
+        </div>
+      </div>
+      <button onclick="checkGitHubUpdate(true)" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5">
+        <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Buscar Update
+      </button>
+    </div>
+  </header>
+
+  <!-- Banner de Nueva Versión Disponible en GitHub -->
+  <div id="update-banner" class="hidden max-w-md mx-auto m-4 p-3 bg-spotify-green text-black rounded-xl font-semibold flex justify-between items-center text-xs shadow-lg">
+    <span>🚀 ¡Nueva versión disponible en GitHub!</span>
+    <a id="update-link" href="#" target="_blank" class="bg-black text-white px-3 py-1 rounded-full text-[11px] font-bold">Descargar APK</a>
+  </div>
+
+  <main class="max-w-md mx-auto p-4 space-y-6">
+    <!-- Hero Resumen -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-emerald-900/40 to-spotify-card p-6 border border-white/10">
+      <span class="text-xs font-bold text-zinc-400 tracking-wider uppercase">Deuda Total Acumulada</span>
+      <div id="deuda-total" class="text-3xl font-black text-white my-1 font-mono">$0.00 MXN</div>
+      <div class="flex justify-between items-center text-xs text-zinc-400 pt-3 border-t border-white/10">
+        <span>Abonos Extras del Día:</span>
+        <span id="abonos-dia" class="font-bold text-spotify-green">$0.00 MXN</span>
+      </div>
+    </div>
+
+    <!-- Filtros Píldora -->
+    <div class="flex gap-2 text-xs font-semibold overflow-x-auto pb-1">
+      <button onclick="filtrar('TODOS')" id="f-TODOS" class="px-4 py-1.5 rounded-full bg-white text-black font-bold">Todos</button>
+      <button onclick="filtrar('DEUDA')" id="f-DEUDA" class="px-4 py-1.5 rounded-full bg-zinc-800 text-zinc-300">Deudas</button>
+      <button onclick="filtrar('PAGO_EXTRA')" id="f-PAGO_EXTRA" class="px-4 py-1.5 rounded-full bg-zinc-800 text-zinc-300">Abonos Diarios</button>
+    </div>
+
+    <!-- Lista -->
+    <div id="lista-cuentas" class="space-y-3"></div>
+  </main>
+
+  <script>
+    // CONFIGURACIÓN DE TU REPOSITORIO DE GITHUB
+    const GITHUB_CONFIG = {
+      user: "TU_USUARIO_GITHUB", // <-- Cambia esto por tu usuario de GitHub
+      repo: "mi-control-deudas", // <-- Cambia esto por el nombre de tu repositorio
+      versionActual: "1.0.0"
+    };
+
+    const DATOS_INICIALES = [
+      { id: 'stori', nombre: 'STORI', tipo: 'DEUDA', monto: 3710.29, subitems: [] },
+      { id: 'c_and_a', nombre: 'C&A', tipo: 'DEUDA', monto: 3715.86, subitems: [{ concepto: 'Compra 1', monto: 424.84 }, { concepto: 'Compra 2', monto: 3291.02 }] },
+      { id: 'nu', nombre: 'NU', tipo: 'PAGO_EXTRA', monto: 0.00, subitems: [] },
+      { id: 'klar', nombre: 'KLAR', tipo: 'PAGO_EXTRA', monto: 0.00, subitems: [] }
+    ];
+
+    let cuentas = [];
+    let filtroActual = 'TODOS';
+
+    function cargar() {
+      const saved = localStorage.getItem('spotify_finances_data');
+      cuentas = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DATOS_INICIALES));
+      render();
+      checkGitHubUpdate(false);
+    }
+
+    function guardar() {
+      localStorage.setItem('spotify_finances_data', JSON.stringify(cuentas));
+      render();
+    }
+
+    function render() {
+      const contenedor = document.getElementById('lista-cuentas');
+      contenedor.innerHTML = '';
+      let totalDeuda = 0, totalExtras = 0;
+
+      cuentas.forEach(c => {
+        if (c.tipo === 'DEUDA') totalDeuda += c.monto;
+        else totalExtras += c.monto;
+
+        if (filtroActual === 'TODOS' || filtroActual === c.tipo) {
+          contenedor.appendChild(crearCard(c));
+        }
+      });
+
+      document.getElementById('deuda-total').innerText = `$${totalDeuda.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+      document.getElementById('abonos-dia').innerText = `$${totalExtras.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+    }
+
+    function crearCard(c) {
+      const card = document.createElement('div');
+      card.className = 'bg-spotify-card border border-white/5 rounded-2xl p-4 space-y-3';
+      const esExtra = c.tipo === 'PAGO_EXTRA';
+
+      let subitemsHTML = '';
+      if (c.subitems && c.subitems.length > 0) {
+        subitemsHTML = `<div class="bg-black/40 rounded-xl p-2.5 space-y-1 text-xs text-zinc-400">` +
+          c.subitems.map(s => `<div class="flex justify-between"><span>• ${s.concepto}</span><span class="font-mono">$${s.monto.toFixed(2)}</span></div>`).join('') +
+          `</div>`;
+      }
+
+      card.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-white">${c.nombre}</h3>
+            <span class="text-[11px] ${esExtra ? 'text-spotify-green' : 'text-rose-400'} font-medium">${esExtra ? 'Abono Acumulado' : 'Saldo Deudor'}</span>
+          </div>
+          <div class="text-right">
+            <div class="text-lg font-black font-mono ${esExtra ? 'text-spotify-green' : 'text-white'}">$${c.monto.toFixed(2)}</div>
+          </div>
+        </div>
+        ${subitemsHTML}
+        <div class="flex gap-2 pt-1">
+          <button onclick="modificarSaldo('${c.id}', -100)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2 rounded-full text-xs font-bold">- $100</button>
+          <button onclick="modificarSaldo('${c.id}', 100)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2 rounded-full text-xs font-bold">+ $100</button>
+        </div>
+      `;
+      return card;
+    }
+
+    function modificarSaldo(id, delta) {
+      const c = cuentas.find(x => x.id === id);
+      if (c) {
+        c.monto = Math.max(0, c.monto + delta);
+        guardar();
+      }
+    }
+
+    function filtrar(tipo) {
+      filtroActual = tipo;
+      ['TODOS', 'DEUDA', 'PAGO_EXTRA'].forEach(t => {
+        const btn = document.getElementById(`f-${t}`);
+        if (t === tipo) btn.className = "px-4 py-1.5 rounded-full bg-white text-black font-bold";
+        else btn.className = "px-4 py-1.5 rounded-full bg-zinc-800 text-zinc-300";
+      });
+      render();
+    }
+
+    // Detector de Actualizaciones desde GitHub Releases
+    async function checkGitHubUpdate(alertaManual) {
+      if (GITHUB_CONFIG.user === "TU_USUARIO_GITHUB") return;
+      try {
+        const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.user}/${GITHUB_CONFIG.repo}/releases/latest`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const latestTag = data.tag_name.replace('v', '');
+
+        if (latestTag !== GITHUB_CONFIG.versionActual) {
+          document.getElementById('update-banner').classList.remove('hidden');
+          const apkAsset = data.assets.find(a => a.name.endsWith('.apk'));
+          if (apkAsset) {
+            document.getElementById('update-link').href = apkAsset.browser_download_url;
+          }
+        } else if (alertaManual) {
+          alert('¡Tu aplicación ya está en la última versión!');
+        }
+      } catch (e) {
+        if (alertaManual) alert('No se pudo verificar la actualización. Revisa la configuración de tu repositorio.');
+      }
+    }
+
+    window.onload = cargar;
+  </script>
+</body>
+</html>
